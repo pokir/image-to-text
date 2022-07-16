@@ -1,7 +1,6 @@
 import os
 import PIL
 from PIL import Image
-from PIL import ImageOps
 import sys
 
 
@@ -14,10 +13,14 @@ except IndexError:
     image_path = input('Image path: ')
 
 try:
-    width, _ = os.get_terminal_size()
+    width, height = os.get_terminal_size()
+
     with Image.open(image_path) as im:
-        #resized = im.resize((width, int(im.size[1] * im.size[0] / width)))
-        resized = ImageOps.scale(im, width / im.size[0])
+        #resized = ImageOps.scale(im, width / im.size[0])
+
+        # resize aspect ratio for text output
+        # (height of characters is twice the width, so divide height by 2)
+        resized = im.resize((width, int(0.5 * im.size[1] * width / im.size[0])))
 
 except (FileNotFoundError, PIL.UnidentifiedImageError):
     print(f'No image found at "{image_path}".')
@@ -26,11 +29,16 @@ except (FileNotFoundError, PIL.UnidentifiedImageError):
 pixels = resized.load()
 
 buffer = ''
+
 for y in range(resized.size[1]):
     for x in range(resized.size[0]):
         grayscale = sum(pixels[x, y][:-1]) / 3
         character = characters[int((len(characters) - 1) * grayscale / 255)]
         buffer += character
+
     buffer += '\n'
 
 print(buffer)
+
+with open('output.txt', 'w') as f:
+    f.write(buffer)
